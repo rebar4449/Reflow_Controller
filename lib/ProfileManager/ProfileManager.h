@@ -57,42 +57,6 @@ public:
   void printProfileInfo(profile_t profile, int profileIndex);
 };
 
-// MCP9600 Thermocouple Manager Class
-class MCP9600Manager {
-private:
-  Adafruit_MCP9600 mcp9600;
-  uint8_t i2c_address;
-  bool sensor_initialized;
-  
-public:
-  MCP9600Manager(uint8_t address = 0x67);
-  ~MCP9600Manager();
-  
-  // Initialization
-  bool begin();
-  bool begin(TwoWire *theWire);
-  
-  // Temperature reading
-  float readThermocoupleTemperature();
-  float readAmbientTemperature();
-  
-  // Configuration
-  bool setThermocoupleType(uint8_t type);
-  bool setFilterCoefficient(uint8_t coefficient);
-  bool setADCResolution(uint8_t resolution);
-  bool setAlertTemperature(uint8_t alert_num, float temperature);
-  bool setAlertHysteresis(uint8_t alert_num, float hysteresis);
-  bool setAlertMode(uint8_t alert_num, uint8_t mode);
-  
-  // Status and fault checking
-  bool checkFault();
-  uint8_t getFaultStatus();
-  String getFaultDescription(uint8_t fault);
-  bool isConnected();
-  
-  // Utility functions
-  void printSensorInfo();
-  void reset();
-};
+// MCP9600Manager removed - using Adafruit library directly
 
 #endif // PROFILE_MANAGER_H

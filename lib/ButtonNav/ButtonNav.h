@@ -66,7 +66,26 @@ enum ReflowStatus {
 
 enum ReflowState {
     REFLOW_STATE_IDLE,
+    REFLOW_STATE_PREHEAT,
+    REFLOW_STATE_SOAK,
+    REFLOW_STATE_REFLOW,
+    REFLOW_STATE_COOL,
+    REFLOW_STATE_COMPLETE,
+    REFLOW_STATE_TOO_HOT,
+    REFLOW_STATE_ERROR,
     REFLOW_STATE_RUNNING
+};
+
+enum DebounceState {
+    DEBOUNCE_STATE_IDLE,
+    DEBOUNCE_STATE_CHECK,
+    DEBOUNCE_STATE_RELEASE
+};
+
+enum Switch {
+    SWITCH_NONE,
+    SWITCH_1,
+    SWITCH_2
 };
 
 class ButtonHandler {

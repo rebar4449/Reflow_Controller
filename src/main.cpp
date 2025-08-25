@@ -22,7 +22,7 @@ void readFile(fs::FS & fs, String path, const char * type);
 void wifiSetup();
 
 // MCP9600 Thermocouple sensor (I2C)
-MCP9600Manager mcp9600;
+Adafruit_MCP9600 mcp9600;
 
 // Use hardware SPI
 Adafruit_ILI9341 display = Adafruit_ILI9341(display_cs, display_dc, display_rst);
@@ -91,39 +91,14 @@ char json;
 int profileUsed = 0;
 char spaceName[] = "profile00";
 
-// Structure for paste profiles
-typedef struct {
-  char      title[20];         // "Lead 183"
-  char      alloy[20];         // "Sn63/Pb37"
-  uint16_t  melting_point;     // 183
-
-  uint16_t  temp_range_0;      // 30
-  uint16_t  temp_range_1;      // 235
-
-  uint16_t  time_range_0;      // 0
-  uint16_t  time_range_1;      // 340
-
-  char      reference[100];    // "https://www.chipquik.com/datasheets/TS391AX50.pdf"
-
-  uint16_t  stages_preheat_0;  // 30
-  uint16_t  stages_preheat_1;  // 100
-
-  uint16_t  stages_soak_0;     // 120
-  uint16_t  stages_soak_1;     // 150
-
-  uint16_t  stages_reflow_0;   // 150
-  uint16_t  stages_reflow_1;   // 183
-
-  uint16_t  stages_cool_0;     // 240
-  uint16_t  stages_cool_1;     // 183
-} profile_t;
+// Profile structure is defined in ProfileManager.h
 
 profile_t paste_profile[numOfProfiles]; //declaration of struct type array
 
 // Library instances
 ButtonHandler buttonHandler;
 // LCD lcd(display); // TODO: Fix LCD compatibility
-OTA ota;
+OTA ota("", "", ""); // TODO: Add proper URLs
 ProfileManager profileManager;
 
 // Variables for reflow logic
@@ -144,13 +119,12 @@ unsigned long timerSoak;
 unsigned long buzzerPeriod;
 
 // Reflow state variables
-reflowState_t reflowState;
-reflowStatus_t reflowStatus;
-debounceState_t debounceState;
+ReflowState reflowState;
+ReflowStatus reflowStatus;
+DebounceState debounceState;
 long lastDebounceTime;
-switch_t switchStatus;
+Switch switchStatus;
 int timerSeconds;
-int oldTemp = 0;
 
 // PID control object
 PID reflowOvenPID(&input, &output, &setpoint, kp, ki, kd, DIRECT);
@@ -253,7 +227,7 @@ void setup() {
   } else {
     Serial.println("MCP9600 sensor initialized successfully");
     mcp9600.setThermocoupleType(MCP9600_TYPE_K);
-    mcp9600.setADCResolution(MCP9600_ADCRESOLUTION_18);
+    mcp9600.setADCresolution(MCP9600_ADCRESOLUTION_18);
   }
 
   // Set window size
@@ -423,11 +397,10 @@ void reflow_main() {
     // Read thermocouple next sampling period
     nextRead += SENSOR_SAMPLING_TIME;
     // Read current temperature
-    input = mcp9600.readThermocoupleTemperature();
-    // Check and print any faults
-    if (mcp9600.checkFault()) {
-      uint8_t fault = mcp9600.getFaultStatus();
-      Serial.println("MCP9600 Fault: " + mcp9600.getFaultDescription(fault));
+    input = mcp9600.readThermocouple();
+    // Check for reading errors (simple range check)
+    if (input < -200.0 || input > 1000.0) {
+      Serial.println("MCP9600 reading out of range: " + String(input));
       isFault = 1;
     }
     inputInt = input / 1;

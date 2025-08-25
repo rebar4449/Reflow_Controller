@@ -1,39 +1,13 @@
 #include <PID_v1.h>
 
-extern MCP9600Manager mcp9600;
+extern Adafruit_MCP9600 mcp9600;
 extern JoystickAxis AXIS_X;
 extern JoystickAxis AXIS_Y;
 
-// Profile structure definition (needed for reflow logic)
-typedef struct {
-  char      title[20];         // "Lead 183"
-  char      alloy[20];         // "Sn63/Pb37"
-  uint16_t  melting_point;     // 183
-
-  uint16_t  temp_range_0;      // 30
-  uint16_t  temp_range_1;      // 235
-
-  uint16_t  time_range_0;      // 0
-  uint16_t  time_range_1;      // 340
-
-  char      reference[100];    // "https://www.chipquik.com/datasheets/TS391AX50.pdf"
-
-  uint16_t  stages_preheat_0;  // 30
-  uint16_t  stages_preheat_1;  // 100
-
-  uint16_t  stages_soak_0;     // 120
-  uint16_t  stages_soak_1;     // 150
-
-  uint16_t  stages_reflow_0;   // 150
-  uint16_t  stages_reflow_1;   // 183
-
-  uint16_t  stages_cool_0;     // 240
-  uint16_t  stages_cool_1;     // 183
-} profile_t;
+// Profile structure is defined in ProfileManager.h
 
 extern bool isFault;
 extern String activeStatus;
-extern void loopScreen();
 extern int oldTemp;
 extern byte state;
 extern bool disableMenu;
@@ -61,11 +35,11 @@ extern unsigned long timerSoak;
 extern unsigned long buzzerPeriod;
 
 // Reflow state variables
-extern reflowState_t reflowState;
-extern reflowStatus_t reflowStatus;
-extern debounceState_t debounceState;
+extern ReflowState reflowState;
+extern ReflowStatus reflowStatus;
+extern DebounceState debounceState;
 extern long lastDebounceTime;
-extern switch_t switchStatus;
+extern Switch switchStatus;
 extern int timerSeconds;
 extern int oldTemp;
 
@@ -169,37 +143,7 @@ extern int oldTemp;
 // Newer board version starts from v1.60 using MAX31855KASA+ chip
 
 // ***** TYPE DEFINITIONS *****
-typedef enum REFLOW_STATE
-{
-  REFLOW_STATE_IDLE,
-  REFLOW_STATE_PREHEAT,
-  REFLOW_STATE_SOAK,
-  REFLOW_STATE_REFLOW,
-  REFLOW_STATE_COOL,
-  REFLOW_STATE_COMPLETE,
-  REFLOW_STATE_TOO_HOT,
-  REFLOW_STATE_ERROR
-} reflowState_t;
-
-typedef enum REFLOW_STATUS
-{
-  REFLOW_STATUS_OFF,
-  REFLOW_STATUS_ON
-} reflowStatus_t;
-
-typedef  enum SWITCH
-{
-  SWITCH_NONE,
-  SWITCH_1,
-  SWITCH_2
-} switch_t;
-
-typedef enum DEBOUNCE_STATE
-{
-  DEBOUNCE_STATE_IDLE,
-  DEBOUNCE_STATE_CHECK,
-  DEBOUNCE_STATE_RELEASE
-} debounceState_t;
+// Using types from ButtonNav.h to avoid conflicts
 
 // ***** CONSTANTS *****
 #define TEMPERATURE_ROOM 50
