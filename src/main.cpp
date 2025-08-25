@@ -89,7 +89,6 @@ bool   SD_present = false;
 //char* json = "";
 int profileNum = 0;
 String jsonName[NUM_OF_PROFILES];
-char json;
 int profileUsed = 0;
 char spaceName[] = "profile00";
 

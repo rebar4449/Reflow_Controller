@@ -89,10 +89,9 @@ private:
     ReflowProfile* paste_profile;
     
     // Menu items
-    char* menuItems[5] = {"Select profile", "Change profile", "Add profile", "Settings", "Info"};
+    const char* menuItems[5] = {"Select profile", "Change profile", "Add profile", "Settings", "Info"};
     
     // Private helper methods
-    char* string2char(String command);
     void UpdateSettingsPointer();
     void ShowMenuOptions(bool clearAll);
     
