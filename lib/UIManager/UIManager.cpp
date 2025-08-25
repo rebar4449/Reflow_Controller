@@ -137,7 +137,10 @@ void UIManager::setLCDData() {
   lcd->setFault(isFault);
   lcd->setProfileUsed(profileUsed);
   lcd->setProfileNum(profileNum);
-  lcd->setProfiles((ReflowProfile*)paste_profile);
+  // Note: LCD expects ReflowProfile* but we have profile_t*
+  // This needs to be handled properly or the LCD interface updated
+  // For now, skip setting profiles to avoid crash
+  // lcd->setProfiles((ReflowProfile*)paste_profile);
 }
 
 void UIManager::updateStatus(String status) {

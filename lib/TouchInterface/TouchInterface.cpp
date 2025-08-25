@@ -1,4 +1,5 @@
 #include "TouchInterface.h"
+#include <config.h>
 
 TouchInterface::TouchInterface(XPT2046_Touchscreen* touchscreen, Adafruit_ILI9341* tftDisplay, int maxButtonCount) {
   ts = touchscreen;

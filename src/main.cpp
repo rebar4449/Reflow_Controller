@@ -1,11 +1,11 @@
 #include <Arduino.h>
+#include <config.h>
 #include <Adafruit_ILI9341.h>
 #include <WiFi.h>
 #include <SD.h>
 #include <SPIFFS.h>
 #include <WiFiManager.h>
 #include <SPI.h>
-#include "config.h"
 #include "LCD.h"
 #include "OTA.h"
 #include "ProfileManager.h"
@@ -95,6 +95,16 @@ char spaceName[] = "profile00";
 // Profile structure is defined in ProfileManager.h
 
 profile_t paste_profile[NUM_OF_PROFILES]; //declaration of struct type array
+
+// OTA variable definitions
+String version_url = "http://czechmaker.com/roc_version.txt";
+int contentLength = 0;
+bool isValidContentType = false;
+String host = "yourdomain.com"; // Host => bucket-name.s3.region.amazonaws.com
+int port = 80; // Non https. For HTTPS 443. As of today, HTTPS doesn't work.
+String bin = "/some.bin"; // bin file name with a slash in front.
+String readString;
+String readVersion;
 
 // Library instances
 // ButtonHandler buttonHandler; // No longer used - touch interface replaces physical buttons
@@ -193,20 +203,21 @@ void setup() {
   digitalWrite(SSR_PIN, LOW);
 
   // Buzzer pin initialization to ensure annoying buzzer is off
-  digitalWrite(BUZZER_PIN, LOW);
-  pinMode(BUZZER_PIN, OUTPUT);
+  //digitalWrite(BUZZER_PIN, LOW);
+  //pinMode(BUZZER_PIN, OUTPUT);
 
   // LED pins initialization and turn on upon start-up (active low)
-  pinMode(LED_PIN, OUTPUT);
-
-  // Start-up splash
-  //digitalWrite(FAN_PIN, LOW);
-  pinMode(FAN_PIN, OUTPUT);
+  pinMode(RGB_LED_R, OUTPUT);
+  pinMode(RGB_LED_G, OUTPUT);
+  pinMode(RGB_LED_B, OUTPUT);
+  digitalWrite(RGB_LED_R, LOW);
+  digitalWrite(RGB_LED_G, LOW);
+  digitalWrite(RGB_LED_B, LOW);
 
   delay(100);
 
   // Turn off LED (active low)
-  digitalWrite(LED_PIN, LOW);
+  //digitalWrite(LED_PIN, LOW);
 
   // Physical button initialization is no longer needed - touch interface replaces buttons
   // pinMode(BUTTON_AXIS_Y, INPUT_PULLDOWN);
@@ -449,7 +460,7 @@ void reflow_main() {
     // If reflow process is on going
     if (reflowStatus == REFLOW_STATUS_ON) {
       // Toggle red LED as system heart beat
-      digitalWrite(LED_PIN, !(digitalRead(LED_PIN)));
+      digitalWrite(RGB_LED_R, !(digitalRead(RGB_LED_R)));
       // Increase seconds timer for reflow curve analysis
       timerSeconds++;
       // Send temperature and time stamp to serial
@@ -462,7 +473,7 @@ void reflow_main() {
       Serial.println(output);
     } else {
       // Turn off red LED
-      digitalWrite(LED_PIN, LOW);
+      digitalWrite(RGB_LED_R, LOW);
     }
     // If currently in error state
     if (reflowState == REFLOW_STATE_ERROR) {
@@ -556,7 +567,7 @@ void reflow_main() {
         // Retrieve current time for buzzer usage
         buzzerPeriod = millis() + 1000;
         // Turn on buzzer and green LED to indicate completion
-        digitalWrite(BUZZER_PIN, HIGH);
+        digitalWrite(RGB_LED_B, HIGH);
         // Turn off reflow process
         reflowStatus = REFLOW_STATUS_OFF;
         // Proceed to reflow Completion state
@@ -568,7 +579,8 @@ void reflow_main() {
       activeStatus = "Complete";
       if (millis() > buzzerPeriod) {
         // Turn off buzzer and green LED
-        digitalWrite(BUZZER_PIN, LOW);
+        digitalWrite(RGB_LED_B, LOW);
+        digitalWrite(RGB_LED_G, HIGH);
         // Reflow process ended
         reflowState = REFLOW_STATE_IDLE;
         profileIsOn = 0;

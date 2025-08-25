@@ -2,17 +2,18 @@
 #define TOUCH_INTERFACE_H
 
 #include <Arduino.h>
+#include <config.h>
 #include <XPT2046_Touchscreen.h>
 #include <Adafruit_ILI9341.h>
 #include <Adafruit_GFX.h>
 
-// Pin definitions for TouchInterface
+/*// Pin definitions for TouchInterface
 #define XPT2046_IRQ 4
 #define display_MOSI 23
 #define display_MISO 19
 #define display_CLK 18
 #define display_CS 5
-
+*/
 // Forward declaration
 void onProfileSelect(int profileIndex);
 

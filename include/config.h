@@ -42,8 +42,8 @@
 #define NUM_OF_PROFILES 10
 
 // Output pin definitions
-#define SSR_PIN 14      // Solid State Relay pin
-#define BUZZER_PIN 26   // Buzzer pin
+#define SSR_PIN 26      // Solid State Relay pin
+//#define BUZZER_PIN 26   // Buzzer pin
 
 // SD Card pin definitions
 #define SD_CS_PIN       5
@@ -56,15 +56,15 @@ const String fwVersion = "0.3.0.0";
 #define ServerVersion "1.0"
 #define projectName "ESP32 Reflow Oven Controller"
 #define WMManager
-String version_url  = "http://czechmaker.com/roc_version.txt";
 
-//OTA settings
-int contentLength = 0;
-bool isValidContentType = false;
-String host = "yourdomain.com"; // Host => bucket-name.s3.region.amazonaws.com
-int port = 80; // Non https. For HTTPS 443. As of today, HTTPS doesn't work.
-String bin = "/some.bin"; // bin file name with a slash in front.
-String readString;
-String readVersion;
+// OTA settings - extern declarations only
+extern String version_url;
+extern int contentLength;
+extern bool isValidContentType;
+extern String host;
+extern int port;
+extern String bin;
+extern String readString;
+extern String readVersion;
 
 #endif // CONFIG_H
