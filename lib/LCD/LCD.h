@@ -2,11 +2,11 @@
 #define LCD_H
 
 #include <Arduino.h>
-#include <TFT_eSPI.h>
+#include <Adafruit_ILI9341.h>
+#include <Adafruit_GFX.h>
 #include <WiFi.h>
 #include <ArduinoJson.h>
-#include <Fonts/FreeSans9pt7b.h>
-#include <Fonts/FreeSerif9pt7b.h>
+#include "TouchInterface.h"
 
 // Color definitions
 #define ILI9341_BLACK       0x0000
@@ -56,7 +56,8 @@ struct ReflowProfile {
 
 class LCD {
 private:
-    TFT_eSPI& display;
+    Adafruit_ILI9341& display;
+    TouchInterface* touchInterface;
     
     // State management
     int state;
@@ -95,11 +96,6 @@ private:
     void UpdateSettingsPointer();
     void ShowMenuOptions(bool clearAll);
     
-    // Text rendering methods
-    void centeredText(String text, uint16_t color, int yCord, int xCord = 0);
-    void rightText(String text, uint16_t color, int yCord, int xCord = 0);
-    void leftText(String text, uint16_t color, int yCord, int xCord = 0);
-    
     // Settings display methods
     void setBuzzer(int y);
     void setButtons(int y);
@@ -117,10 +113,19 @@ private:
 
 public:
     // Constructor
-    LCD(TFT_eSPI& tft);
+    LCD(Adafruit_ILI9341& tft, TouchInterface* touch = nullptr);
     
     // Destructor
     ~LCD();
+    
+    // Touch interface methods
+    void setTouchInterface(TouchInterface* touch);
+    void processTouch();
+    
+    // Text rendering methods
+    void centeredText(String text, uint16_t color, int yCord, int xCord = 0);
+    void rightText(String text, uint16_t color, int yCord, int xCord = 0);
+    void leftText(String text, uint16_t color, int yCord, int xCord = 0);
     
     // Main menu processing
     void processMenu();

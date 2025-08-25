@@ -2,17 +2,18 @@
 #include <Adafruit_ILI9341.h>
 #include <WiFi.h>
 #include <SD.h>
+#include <SPIFFS.h>
 #include <WiFiManager.h>
 #include <SPI.h>
 #include "config.h"
-#include "Button.h"
-#include "ButtonNav.h"
 #include "LCD.h"
 #include "OTA.h"
 #include "ProfileManager.h"
-#include <SPIFFS.h>
 #include "reflow_logic.h"
 #include <Adafruit_MCP9600.h>
+#include <XPT2046_Touchscreen.h>
+#include "TouchInterface.h"
+#include "UIManager.h"
 
 // Function prototypes
 void updatePreferences();
@@ -25,8 +26,15 @@ void wifiSetup();
 Adafruit_MCP9600 mcp9600;
 
 // Use hardware SPI
-Adafruit_ILI9341 display = Adafruit_ILI9341(display_cs, display_dc, display_rst);
-//Adafruit_ILI9341 display = Adafruit_ILI9341(display_cs, display_dc, display_mosi, display_sclk, display_rst);
+//Adafruit_ILI9341 display = Adafruit_ILI9341(display_cs, display_dc, display_rst);
+Adafruit_ILI9341 display = Adafruit_ILI9341(display_CS, display_DC, display_MOSI, display_CLK, display_RST);
+
+// Touchscreen instance
+XPT2046_Touchscreen ts(XPT2046_CS, XPT2046_IRQ);
+
+// Touch interface and UI manager instances
+TouchInterface* touchInterface = nullptr;
+UIManager* uiManager = nullptr;
 
 #define FORMAT_SPIFFS_IF_FAILED true
 
@@ -34,19 +42,21 @@ Preferences preferences;
 WiFiManager wm;
 char msg_buf[10];
 
-#define DEBOUNCE_MS 100
-// Create JoystickAxis objects for ButtonNav compatibility
-JoystickAxis AXIS_Y(BUTTON_AXIS_Y, 512);
-JoystickAxis AXIS_X(BUTTON_AXIS_X, 512);
+// Physical buttons are no longer used - touch interface replaces them
+// #define DEBOUNCE_MS 100
+// // Create JoystickAxis objects for ButtonNav compatibility
+// JoystickAxis AXIS_Y(BUTTON_AXIS_Y, 512);
+// JoystickAxis AXIS_X(BUTTON_AXIS_X, 512);
 
-int digitalButtonPins[] = {BUTTON_SELECT, BUTTON_MENU, BUTTON_BACK};
+// int digitalButtonPins[] = {BUTTON_SELECT, BUTTON_MENU, BUTTON_BACK};
 
-#define numDigButtons sizeof(digitalButtonPins)
+// #define numDigButtons sizeof(digitalButtonPins)
 
-int buttonState;             // the current reading from the input pin
-int lastButtonState = LOW;
-unsigned long lastDebounceTime_ = 0;  // the last time the output pin was toggled
-unsigned long debounceDelay = 200;    // the debounce time; increase if the output flicker
+// Physical button variables are no longer used
+// int buttonState;             // the current reading from the input pin
+// int lastButtonState = LOW;
+// unsigned long lastDebounceTime_ = 0;  // the last time the output pin was toggled
+// unsigned long debounceDelay = 200;    // the debounce time; increase if the output flicker
 
 String activeStatus = "";
 bool menu = 0;
@@ -65,15 +75,8 @@ bool updataAvailable = 0;
 bool testState = 0;
 bool useSPIFFS = 0 ;
 
-// Button variables
-int buttonVal[numDigButtons] = {0};                            // value read from button
-int buttonLast[numDigButtons] = {0};                           // buffered value of the button's previous state
-long btnDnTime[numDigButtons];                               // time the button was pressed down
-long btnUpTime[numDigButtons];                               // time the button was released
-boolean ignoreUp[numDigButtons] = {false};                     // whether to ignore the button release because the click+hold was triggered
-boolean menuMode[numDigButtons] = {false};                     // whether menu mode has been activated or not
-int debounce = 50;
-int holdTime = 1000;
+// Physical button variables are no longer used - touch interface replaces them
+// All button handling is now done through TouchInterface
 int oldTemp = 0;
 
 byte numOfPointers = 0;
@@ -85,18 +88,17 @@ byte previousSettingsPointer = 0;
 bool   SD_present = false;
 //char* json = "";
 int profileNum = 0;
-#define numOfProfiles 10
-String jsonName[numOfProfiles];
+String jsonName[NUM_OF_PROFILES];
 char json;
 int profileUsed = 0;
 char spaceName[] = "profile00";
 
 // Profile structure is defined in ProfileManager.h
 
-profile_t paste_profile[numOfProfiles]; //declaration of struct type array
+profile_t paste_profile[NUM_OF_PROFILES]; //declaration of struct type array
 
 // Library instances
-ButtonHandler buttonHandler;
+// ButtonHandler buttonHandler; // No longer used - touch interface replaces physical buttons
 // LCD lcd(display); // TODO: Fix LCD compatibility
 OTA ota("", "", ""); // TODO: Add proper URLs
 ProfileManager profileManager;
@@ -157,17 +159,27 @@ void setup() {
   Serial.println("Used profile: " + String(profileUsed));
   Serial.println();
   // load profiles from ESP32 memory
-  for (int i = 0; i < numOfProfiles; i++) {
+  for (int i = 0; i < NUM_OF_PROFILES; i++) {
     profileManager.loadProfiles(i, &paste_profile[i]);
   }
   display.begin();
   
-  // Initialize libraries
-  buttonHandler.begin(digitalButtonPins, numDigButtons);
-  buttonHandler.setJoystickAxes(&AXIS_X, &AXIS_Y);
-  buttonHandler.setConfiguration(verboseOutput, horizontal, buttons, state, previousState, 
-                                settings_pointer, previousSettingsPointer, numOfPointers, 
-                                profileIsOn, disableMenu, buzzer, useOTA, useSPIFFS, fan, testState, activeStatus);
+  // Initialize touch interface and UI manager
+  touchInterface = new TouchInterface(&ts, &display);
+  touchInterface->begin();
+  
+  uiManager = new UIManager(touchInterface, &display);
+  uiManager->begin();
+  
+  // Update LCD data with current state
+  uiManager->setLCDData();
+  
+  // Physical button initialization is no longer needed
+  // buttonHandler.begin(digitalButtonPins, numDigButtons);
+  // buttonHandler.setJoystickAxes(&AXIS_X, &AXIS_Y);
+  // buttonHandler.setConfiguration(verboseOutput, horizontal, buttons, state, previousState, 
+  //                               settings_pointer, previousSettingsPointer, numOfPointers, 
+  //                               profileIsOn, disableMenu, buzzer, useOTA, useSPIFFS, fan, testState, activeStatus);
   
   // lcd.startScreen(); // TODO: Fix LCD compatibility
 
@@ -197,18 +209,18 @@ void setup() {
   // Turn off LED (active low)
   digitalWrite(ledPin, ledState);
 
-  // Button initialization
-  pinMode(BUTTON_AXIS_Y, INPUT_PULLDOWN);
-  pinMode(BUTTON_AXIS_X, INPUT_PULLDOWN);
+  // Physical button initialization is no longer needed - touch interface replaces buttons
+  // pinMode(BUTTON_AXIS_Y, INPUT_PULLDOWN);
+  // pinMode(BUTTON_AXIS_X, INPUT_PULLDOWN);
 
-  for (byte i = 0; i < numDigButtons - 1 ; i++) {
-    // Set button input pin
-    if (digitalButtonPins[i] > 20  && digitalButtonPins[i] < 40) {
-      pinMode(digitalButtonPins[i], INPUT_PULLUP);
-      digitalWrite(digitalButtonPins[i], LOW  );
-      Serial.println(digitalButtonPins[i]);
-    }
-  }
+  // for (byte i = 0; i < numDigButtons - 1 ; i++) {
+  //   // Set button input pin
+  //   if (digitalButtonPins[i] > 20  && digitalButtonPins[i] < 40) {
+  //     pinMode(digitalButtonPins[i], INPUT_PULLUP);
+  //     digitalWrite(digitalButtonPins[i], LOW  );
+  //     Serial.println(digitalButtonPins[i]);
+  //   }
+  // }
 
   wifiSetup();
 
@@ -262,7 +274,7 @@ void setup() {
   }
   // Load data from selected storage
   if ((SD_present == true) || (useSPIFFS != 0)) {
-    profile_t paste_profile_load[numOfProfiles];
+    profile_t paste_profile_load[NUM_OF_PROFILES];
     // Scan all profiles from source
 
     for (int i = 0; i < profileNum; i++) {
@@ -315,9 +327,10 @@ void updatePreferences() {
 }
 
 void processButtons() {
-  // Use the ButtonNav library functions
-  buttonHandler.processDigitalButtons();
-  buttonHandler.readAnalogButtons();
+  // Process touch interface instead of physical buttons
+  if (uiManager) {
+    uiManager->update();
+  }
 }
 
 void loop() {
@@ -326,6 +339,13 @@ void loop() {
     reflow_main();
   }
   processButtons();
+  
+  // Update UI with current temperature and status
+  if (uiManager) {
+    uiManager->updateTemperature(input);
+    uiManager->updateStatus(activeStatus);
+    uiManager->setLCDData();  // Keep LCD data in sync
+  }
 }
 
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
@@ -578,58 +598,58 @@ void reflow_main() {
       break;
   }
 
-  // If switch 1 is pressed
-  if (switchStatus == SWITCH_1) {
-    // If currently reflow process is on going
-    if (reflowStatus == REFLOW_STATUS_ON) {
-      // Button press is for cancelling
-      // Turn off reflow process
-      reflowStatus = REFLOW_STATUS_OFF;
-      // Reinitialize state machine
-      reflowState = REFLOW_STATE_IDLE;
-    }
-  }
+  // Touch interface handles stop button - this logic is now in UIManager callbacks
+  // if (switchStatus == SWITCH_1) {
+  //   // If currently reflow process is on going
+  //   if (reflowStatus == REFLOW_STATUS_ON) {
+  //     // Button press is for cancelling
+  //     // Turn off reflow process
+  //     reflowStatus = REFLOW_STATUS_OFF;
+  //     // Reinitialize state machine
+  //     reflowState = REFLOW_STATE_IDLE;
+  //   }
+  // }
 
-  // Simple switch debounce state machine
-  switch (debounceState) {
-    case DEBOUNCE_STATE_IDLE:
-      // No valid switch press
-      switchStatus = SWITCH_NONE;
-      // If switch #1 is pressed
-      AXIS_X.readAxis();
-      if (AXIS_X.wasAxisPressed() == 1) {
-        // Intialize debounce counter
-        lastDebounceTime = millis();
-        Serial.println("Switch pressed");
-        // Proceed to check validity of button press
-        debounceState = DEBOUNCE_STATE_CHECK;
-      }
-      break;
+  // Physical button debounce logic is no longer needed - touch interface handles this
+  // switch (debounceState) {
+  //   case DEBOUNCE_STATE_IDLE:
+  //     // No valid switch press
+  //     switchStatus = SWITCH_NONE;
+  //     // If switch #1 is pressed
+  //     AXIS_X.readAxis();
+  //     if (AXIS_X.wasAxisPressed() == 1) {
+  //       // Intialize debounce counter
+  //       lastDebounceTime = millis();
+  //       Serial.println("Switch pressed");
+  //       // Proceed to check validity of button press
+  //       debounceState = DEBOUNCE_STATE_CHECK;
+  //     }
+  //     break;
 
-    case DEBOUNCE_STATE_CHECK:
-      AXIS_X.readAxis();
-      if (AXIS_X.wasAxisPressed() == 1) {
-        // If minimum debounce period is completed
-        if ((millis() - lastDebounceTime) > DEBOUNCE_PERIOD_MIN) {
-          // Proceed to wait for button release
-          debounceState = DEBOUNCE_STATE_RELEASE;
-        }
-      } else {
-        // Reinitialize button debounce state machine
-        debounceState = DEBOUNCE_STATE_IDLE;
-      }
-      break;
+  //   case DEBOUNCE_STATE_CHECK:
+  //     AXIS_X.readAxis();
+  //     if (AXIS_X.wasAxisPressed() == 1) {
+  //       // If minimum debounce period is completed
+  //       if ((millis() - lastDebounceTime) > DEBOUNCE_PERIOD_MIN) {
+  //         // Proceed to wait for button release
+  //         debounceState = DEBOUNCE_STATE_RELEASE;
+  //     }
+  //     } else {
+  //       // Reinitialize button debounce state machine
+  //       debounceState = DEBOUNCE_STATE_IDLE;
+  //     }
+  //     break;
 
-    case DEBOUNCE_STATE_RELEASE:
-      AXIS_X.readAxis();
-      if (AXIS_X.wasAxisPressed() > 0) {
-        // Valid switch 1 press
-        switchStatus = SWITCH_1;
-        // Reinitialize button debounce state machine
-        debounceState = DEBOUNCE_STATE_IDLE;
-      }
-      break;
-  }
+  //   case DEBOUNCE_STATE_RELEASE:
+  //     AXIS_X.readAxis();
+  //     if (AXIS_X.wasAxisPressed() > 0) {
+  //       // Valid switch 1 press
+  //       switchStatus = SWITCH_1;
+  //       // Reinitialize button debounce state machine
+  //       debounceState = DEBOUNCE_STATE_IDLE;
+  //     }
+  //     break;
+  // }
 
   // PID computation and SSR control
   if (reflowStatus == REFLOW_STATUS_ON) {
