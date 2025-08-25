@@ -1,0 +1,14 @@
+{
+  "title": "Lead-Free SAC305",
+  "alloy": "SAC305",
+  "melting_point": 217,
+  "temp_range": [25, 250],
+  "time_range": [0, 300],
+  "reference": "IPC-J-STD-020D",
+  "stages": {
+    "preheat": [25, 150],
+    "soak": [150, 180],
+    "reflow": [180, 217],
+    "cool": [217, 150]
+  }
+}
