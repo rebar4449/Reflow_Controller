@@ -27,13 +27,9 @@
 #define ILI9341_WHITE       0xFFFF
 #define ILI9341_ORANGE      0xFD20
 #define ILI9341_GREENYELLOW 0xAFE5
-#define ILI9341_PINK        0xF81F
+//#define ILI9341_PINK        0xF81F
 
-// Pin definitions
-#define buzzerPin 25
-#define fanPin 26
-#define ssrPin 27
-#define ledPin 2
+// Pin definitions are now centralized in config.h
 
 // State definitions
 #define STATE_HOME 0

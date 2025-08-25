@@ -189,24 +189,24 @@ void setup() {
 
   // SSR pin initialization to ensure reflow oven is off
 
-  pinMode(ssrPin, OUTPUT);
-  digitalWrite(ssrPin, LOW);
+  pinMode(SSR_PIN, OUTPUT);
+  digitalWrite(SSR_PIN, LOW);
 
   // Buzzer pin initialization to ensure annoying buzzer is off
-  digitalWrite(buzzerPin, LOW);
-  pinMode(buzzerPin, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+  pinMode(BUZZER_PIN, OUTPUT);
 
   // LED pins initialization and turn on upon start-up (active low)
-  pinMode(ledPin, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
 
   // Start-up splash
-  //digitalWrite(fanPin, LOW);
-  pinMode(fanPin, OUTPUT);
+  //digitalWrite(FAN_PIN, LOW);
+  pinMode(FAN_PIN, OUTPUT);
 
   delay(100);
 
   // Turn off LED (active low)
-  digitalWrite(ledPin, ledState);
+  digitalWrite(LED_PIN, LOW);
 
   // Physical button initialization is no longer needed - touch interface replaces buttons
   // pinMode(BUTTON_AXIS_Y, INPUT_PULLDOWN);
@@ -260,7 +260,7 @@ void setup() {
     listDir(SPIFFS, "/profiles", 0);
   } else {
     Serial.print(F("Initializing SD card..."));
-    if (!SD.begin(SD_CS_pin)) { // see if the card is present and can be initialised. Wemos SD-Card CS uses D8
+    if (!SD.begin(SD_CS_PIN)) { // see if the card is present and can be initialised. Wemos SD-Card CS uses D8
       Serial.println(F("Card failed or not present, no SD Card data logging possible..."));
       SD_present = false;
     } else {
@@ -449,7 +449,7 @@ void reflow_main() {
     // If reflow process is on going
     if (reflowStatus == REFLOW_STATUS_ON) {
       // Toggle red LED as system heart beat
-      digitalWrite(ledPin, !(digitalRead(ledPin)));
+      digitalWrite(LED_PIN, !(digitalRead(LED_PIN)));
       // Increase seconds timer for reflow curve analysis
       timerSeconds++;
       // Send temperature and time stamp to serial
@@ -462,7 +462,7 @@ void reflow_main() {
       Serial.println(output);
     } else {
       // Turn off red LED
-      digitalWrite(ledPin, LOW);
+      digitalWrite(LED_PIN, LOW);
     }
     // If currently in error state
     if (reflowState == REFLOW_STATE_ERROR) {
@@ -556,7 +556,7 @@ void reflow_main() {
         // Retrieve current time for buzzer usage
         buzzerPeriod = millis() + 1000;
         // Turn on buzzer and green LED to indicate completion
-        digitalWrite(buzzerPin, HIGH);
+        digitalWrite(BUZZER_PIN, HIGH);
         // Turn off reflow process
         reflowStatus = REFLOW_STATUS_OFF;
         // Proceed to reflow Completion state
@@ -568,7 +568,7 @@ void reflow_main() {
       activeStatus = "Complete";
       if (millis() > buzzerPeriod) {
         // Turn off buzzer and green LED
-        digitalWrite(buzzerPin, LOW);
+        digitalWrite(BUZZER_PIN, LOW);
         // Reflow process ended
         reflowState = REFLOW_STATE_IDLE;
         profileIsOn = 0;
@@ -658,10 +658,10 @@ void reflow_main() {
       // Time to shift the Relay Window
       windowStartTime += windowSize;
     }
-    if (output > (now - windowStartTime)) digitalWrite(ssrPin, HIGH);
-    else digitalWrite(ssrPin, LOW);
+    if (output > (now - windowStartTime)) digitalWrite(SSR_PIN, HIGH);
+    else digitalWrite(SSR_PIN, LOW);
   } else {
     // Reflow oven process is off, ensure oven is off
-    digitalWrite(ssrPin, LOW);
+    digitalWrite(SSR_PIN, LOW);
   }
 }

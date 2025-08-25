@@ -1,16 +1,30 @@
 #include "UIManager.h"
-#include "ProfileManager.h"
 #include "config.h"
+
+// Forward declaration of profile_t structure
+typedef struct {
+  char title[32];
+  char alloy[32];
+  uint16_t melting_point;
+  uint16_t temp_range_0;
+  uint16_t temp_range_1;
+  uint16_t time_range_0;
+  uint16_t time_range_1;
+  char reference[128];
+  uint16_t stages_preheat_0;
+  uint16_t stages_preheat_1;
+  uint16_t stages_soak_0;
+  uint16_t stages_soak_1;
+  uint16_t stages_reflow_0;
+  uint16_t stages_reflow_1;
+  uint16_t stages_cool_0;
+  uint16_t stages_cool_1;
+} profile_t;
 
 // Define NUM_OF_PROFILES if not already defined
 #ifndef NUM_OF_PROFILES
 #define NUM_OF_PROFILES 10
 #endif
-
-// Standalone function for TouchInterface to call
-void onProfileSelect(int profileIndex) {
-  UIManager::onProfileSelect(profileIndex);
-}
 
 // Global variables for callbacks
 extern byte state;
@@ -24,20 +38,12 @@ extern bool connected;
 extern bool isFault;
 extern int profileNum;
 
-// Global callback function for profile selection
-void onProfileSelectCallback() {
-  // This will be called by the touch interface
-  // The profile index is stored in the button's callbackData
-  if (uiManager && uiManager->touchInterface) {
-    int buttonIndex = uiManager->touchInterface->getButtonAt(uiManager->lastTouchX, uiManager->lastTouchY);
-    if (buttonIndex >= 0) {
-      int profileIndex = uiManager->touchInterface->getButtonData(buttonIndex);
-      if (profileIndex >= 0) {
-        onProfileSelect(profileIndex);
-      }
-    }
-  }
+// Standalone function for TouchInterface to call
+void onProfileSelect(int profileIndex) {
+  UIManager::onProfileSelect(profileIndex);
 }
+
+
 
 UIManager::UIManager(TouchInterface* touch, Adafruit_ILI9341* tft) {
   touchInterface = touch;

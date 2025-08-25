@@ -9,60 +9,56 @@
 
 #define VERBOSE 1 
 
+// RGB LED pin definitions
+#define RGB_LED_R 4
+#define RGB_LED_G 16
+#define RGB_LED_B 17
+
 // LCD pin definition
 // Display pin definitions (ILI9341)
-#define display_CS   5   // goes to TFT CS
-#define display_DC   21  // goes to TFT DC
+#define display_CS   15   // goes to TFT CS
+#define display_DC    2  // goes to TFT DC
 #define display_RST  -1  // goes to TFT RESET
-#define display_MOSI 23  // goes to TFT MOSI
-#define display_CLK 18  // goes to TFT SCK/CLK
-#define display_MISO 19    // Not connected
+#define display_MOSI 13  // goes to TFT MOSI
+#define display_CLK  14  // goes to TFT SCK/CLK
+#define display_MISO 12    // Not connected
+#define display_BL   21  // goes to TFT BL
 
 // Touchscreen pin definitions (XPT2046)
-#define XPT2046_CS  16  // Touchscreen CS pin
-#define XPT2046_IRQ 4   // Touchscreen IRQ pin (optional)
+#define XPT2046_CLK 25
+#define XPT2046_MISO 39
+#define XPT2046_MOSI 32
+#define XPT2046_CS  33  // Touchscreen CS pin
+#define XPT2046_IRQ 36   // Touchscreen IRQ pin (optional)
 //       3.3V     // Goes to TFT LED
 //       5v       // Goes to TFT Vcc
 //       Gnd      // Goes to TFT Gnd
 
 // I2C pin definitions
-#define I2C_SDA 25
-#define I2C_SCL 26
+#define I2C_SDA 22
+#define I2C_SCL 27
 
 // Profile configuration
 #define NUM_OF_PROFILES 10
 
-/*SSR pin definition*/
-int ssrPin = 14;
-/*LED pin definition*/
-int ledPin = 2;
-int ledState = LOW;
-/*Buzzer pin definition*/
-int buzzerPin = 15;
-/* Fan pin definition */
-int fanPin = 12 ; // pin 25 -> pin is still high (need to solve this)
+// Output pin definitions
+#define SSR_PIN 14      // Solid State Relay pin
+#define BUZZER_PIN 26   // Buzzer pin
 
-/*Swich pin definition*/
-#define BUTTON_SELECT   27
-#define BUTTON_AXIS_Y   35
-#define BUTTON_AXIS_X   34
-#define BUTTON_MENU     32
-#define BUTTON_BACK     33
-#define SD_CS_pin       17
+// SD Card pin definitions
+#define SD_CS_PIN       5
+#define SD_MISO_PIN     19
+#define SD_MOSI_PIN     23
+#define SD_CLK_PIN      18
 
 // FW info
-
 const String fwVersion = "0.3.0.0";
 #define ServerVersion "1.0"
 #define projectName "ESP32 Reflow Oven Controller"
 #define WMManager
 String version_url  = "http://czechmaker.com/roc_version.txt";
 
-
-// Setup
-
 //OTA settings
-
 int contentLength = 0;
 bool isValidContentType = false;
 String host = "yourdomain.com"; // Host => bucket-name.s3.region.amazonaws.com
